@@ -5,10 +5,19 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     
+    // Convert items to array if it's not already
+    if (data.items && !Array.isArray(data.items)) {
+      if (typeof data.items === 'object') {
+        data.items = Object.values(data.items);
+      } else {
+        data.items = [data.items];
+      }
+    }
+    
     // Validate required fields
-    if (!data.estimateNumber || !data.items) {
+    if (!data.estimateNumber || !data.items || !Array.isArray(data.items)) {
       return NextResponse.json(
-        { error: 'Missing required fields: estimateNumber and items are required' },
+        { error: 'Missing required fields: estimateNumber and items (as array) are required' },
         { status: 400 }
       );
     }

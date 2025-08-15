@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { generatePDFEstimate, validateEstimateData } from "@/lib/pdf-webhook"
 
 export async function POST(request: NextRequest) {
   try {
@@ -230,6 +231,101 @@ export async function POST(request: NextRequest) {
                               ),
                             )
                           }
+                        }
+                      }
+                    } else if (event.object === "thread.run" && event.status === "requires_action") {
+                      // Handle tool calls
+                      console.log("Run requires action - handling tool calls")
+                      const toolCalls = event.required_action?.submit_tool_outputs?.tool_calls || []
+                      
+                      const toolOutputs = []
+                      
+                      for (const toolCall of toolCalls) {
+                        console.log("Processing tool call:", toolCall.function.name)
+                        
+                        if (toolCall.function.name === "generate_pdf_estimate") {
+                          try {
+                            const params = JSON.parse(toolCall.function.arguments)
+                            console.log("PDF generation params:", params)
+                            
+                            // Validate the data
+                            const validation = validateEstimateData(params)
+                            if (!validation.valid) {
+                              toolOutputs.push({
+                                tool_call_id: toolCall.id,
+                                output: JSON.stringify({
+                                  success: false,
+                                  error: validation.error
+                                })
+                              })
+                              continue
+                            }
+                            
+                            // Generate PDF via webhook
+                            const result = await generatePDFEstimate(params)
+                            
+                            toolOutputs.push({
+                              tool_call_id: toolCall.id,
+                              output: JSON.stringify(result)
+                            })
+                            
+                            // Send status update to client
+                            controller.enqueue(
+                              encoder.encode(
+                                `data: ${JSON.stringify({
+                                  type: "tool_result",
+                                  tool: "generate_pdf_estimate",
+                                  result: result
+                                })}\n\n`,
+                              ),
+                            )
+                            
+                          } catch (error) {
+                            console.error("Error in PDF generation:", error)
+                            toolOutputs.push({
+                              tool_call_id: toolCall.id,
+                              output: JSON.stringify({
+                                success: false,
+                                error: error instanceof Error ? error.message : "Unknown error"
+                              })
+                            })
+                          }
+                        } else {
+                          // Unknown tool call
+                          toolOutputs.push({
+                            tool_call_id: toolCall.id,
+                            output: JSON.stringify({
+                              success: false,
+                              error: `Unknown tool: ${toolCall.function.name}`
+                            })
+                          })
+                        }
+                      }
+                      
+                      // Submit tool outputs
+                      if (toolOutputs.length > 0) {
+                        try {
+                          const submitResponse = await fetch(
+                            `https://api.openai.com/v1/threads/${currentThreadId}/runs/${event.id}/submit_tool_outputs`,
+                            {
+                              method: "POST",
+                              headers: {
+                                Authorization: `Bearer ${API_KEY}`,
+                                "Content-Type": "application/json",
+                                "OpenAI-Beta": "assistants=v2",
+                              },
+                              body: JSON.stringify({
+                                tool_outputs: toolOutputs,
+                                stream: true
+                              }),
+                            }
+                          )
+                          
+                          if (!submitResponse.ok) {
+                            console.error("Failed to submit tool outputs:", await submitResponse.text())
+                          }
+                        } catch (submitError) {
+                          console.error("Error submitting tool outputs:", submitError)
                         }
                       }
                     } else if (event.object === "thread.run" && event.status === "completed") {
