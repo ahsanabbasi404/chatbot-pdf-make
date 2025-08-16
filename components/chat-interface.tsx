@@ -217,8 +217,8 @@ export function ChatInterface() {
             <MessageSquare className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-semibold text-foreground">AI Assistant</h1>
-            <p className="text-sm text-muted-foreground">Powered by OpenAI</p>
+            <h1 className="font-semibold text-foreground">SLS Pricing Tool</h1>
+            <p className="text-sm text-muted-foreground">Signage & Graphics Quoting Assistant</p>
           </div>
         </div>
       </div>
@@ -229,8 +229,8 @@ export function ChatInterface() {
           {messages.length === 0 && (
             <div className="text-center py-12">
               <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">Welcome to AI Assistant</h3>
-              <p className="text-muted-foreground">Start a conversation by typing a message or uploading a document.</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">Hi, this is the SLS Pricing Tool — how can I help you today?</h3>
+              <p className="text-muted-foreground">I'm your professional quoting assistant for signage installation, manufacturing, and artwork jobs.</p>
             </div>
           )}
 
@@ -242,7 +242,7 @@ export function ChatInterface() {
               <div
                 className={cn(
                   "max-w-[80%] rounded-lg px-4 py-3",
-                  message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted",
+                  message.role === "user" ? "bg-primary text-white" : "bg-muted text-foreground",
                 )}
               >
                 {message.files && message.files.length > 0 && (
@@ -257,7 +257,7 @@ export function ChatInterface() {
                 )}
 
                 {message.content ? (
-                  <MarkdownRenderer content={message.content} />
+                  <MarkdownRenderer content={message.content} className="text-inherit" />
                 ) : message.role === "assistant" && isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -305,7 +305,7 @@ export function ChatInterface() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
+                placeholder="Tell me about your signage project..."
                 disabled={isLoading}
                 className="pr-12"
               />
@@ -330,7 +330,7 @@ export function ChatInterface() {
           />
 
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            Upload PDF or DOCX files for document analysis
+            Upload project documents, sketches, or specifications for accurate quoting
           </p>
         </div>
       </div>

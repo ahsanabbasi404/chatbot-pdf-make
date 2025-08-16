@@ -323,6 +323,55 @@ export async function POST(request: NextRequest) {
                           
                           if (!submitResponse.ok) {
                             console.error("Failed to submit tool outputs:", await submitResponse.text())
+                          } else {
+                            // Process the streaming response from tool submission
+                            const submitReader = submitResponse.body?.getReader()
+                            if (submitReader) {
+                              const submitDecoder = new TextDecoder()
+                              let submitBuffer = ""
+                              
+                              while (true) {
+                                const { done: submitDone, value: submitValue } = await submitReader.read()
+                                if (submitDone) break
+                                
+                                submitBuffer += submitDecoder.decode(submitValue, { stream: true })
+                                const submitLines = submitBuffer.split("\n")
+                                submitBuffer = submitLines.pop() || ""
+                                
+                                for (const submitLine of submitLines) {
+                                  if (submitLine.startsWith("data: ")) {
+                                    const submitData = submitLine.slice(6)
+                                    if (submitData === "[DONE]") {
+                                      continue
+                                    }
+                                    
+                                    try {
+                                      const submitEvent = JSON.parse(submitData)
+                                      
+                                      if (submitEvent.object === "thread.message.delta") {
+                                        const submitDelta = submitEvent.delta
+                                        if (submitDelta.content) {
+                                          for (const submitContent of submitDelta.content) {
+                                            if (submitContent.type === "text" && submitContent.text?.value) {
+                                              controller.enqueue(
+                                                encoder.encode(
+                                                  `data: ${JSON.stringify({
+                                                    type: "content",
+                                                    content: submitContent.text.value,
+                                                  })}\n\n`,
+                                                ),
+                                              )
+                                            }
+                                          }
+                                        }
+                                      }
+                                    } catch (submitParseError) {
+                                      console.error("Error parsing submit stream data:", submitParseError)
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
                         } catch (submitError) {
                           console.error("Error submitting tool outputs:", submitError)
