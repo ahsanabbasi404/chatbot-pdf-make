@@ -3,17 +3,17 @@ import { generateEstimatePDFBackup } from '../../../lib/estimate-to-pdf-backup';
 
 export async function POST(request: NextRequest) {
   try {
-    const raw = await request.text();
-console.log("🪵 RAW request body:", raw);
-let data1;
-try {
-  data1 = JSON.parse(raw);
-} catch (err) {
-  console.error("❌ JSON parse failed:", err);
-  return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-}
-console.log("✅ Parsed data:", data1);
-    console.log('📥 PDF Generation Request received');
+//     const raw = await request.text();
+// console.log("🪵 RAW request body:", raw);
+// let data1;
+// try {
+//   data1 = JSON.parse(raw);
+// } catch (err) {
+//   console.error("❌ JSON parse failed:", err);
+//   return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+// }
+// console.log("✅ Parsed data:", data1);
+//     console.log('📥 PDF Generation Request received');
     const data = await request.json();
     console.log('📋 JSON data received:', data);
     
