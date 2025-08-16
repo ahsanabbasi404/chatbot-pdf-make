@@ -10,24 +10,47 @@ export async function POST(request: NextRequest) {
     // Extract data from FormData
     const to = formData.get('to') as string;
     const email = formData.get('email') as string;
-    const itemsData = formData.getAll('items[]') as string[];
+    
+    // Try to get items as array first (items[]), then as single field (items)
+    let itemsData = formData.getAll('items[]') as string[];
+    if (itemsData.length === 0) {
+      const singleItems = formData.get('items') as string;
+      if (singleItems) {
+        itemsData = [singleItems];
+      }
+    }
     
     console.log('📊 FormData contents:');
     console.log('  - to:', to ? 'Present' : 'Missing');
     console.log('  - email:', email ? 'Present' : 'Missing');
-    console.log('  - items[] count:', itemsData.length);
+    console.log('  - items data found:', itemsData.length > 0 ? 'Yes' : 'No');
+    console.log('  - items raw data:', itemsData);
     
     // Parse items from JSON strings
-    const items = itemsData.map((item, index) => {
-      try {
-        const parsed = JSON.parse(item);
-        console.log(`  ✅ Item ${index + 1} parsed successfully:`, parsed.description);
-        return parsed;
-      } catch (error) {
-        console.log(`  ❌ Item ${index + 1} parsing failed:`, item);
-        return null;
+    let items = [];
+    if (itemsData.length > 0) {
+      // If we have a single string that looks like an array, try to parse it directly
+      if (itemsData.length === 1 && itemsData[0].startsWith('[')) {
+        try {
+          items = JSON.parse(itemsData[0]);
+          console.log(`  ✅ Parsed items array directly:`, items.length, 'items');
+        } catch (error) {
+          console.log(`  ❌ Failed to parse items array:`, error);
+        }
+      } else {
+        // Parse each item individually
+        items = itemsData.map((item, index) => {
+          try {
+            const parsed = JSON.parse(item);
+            console.log(`  ✅ Item ${index + 1} parsed successfully:`, parsed.description);
+            return parsed;
+          } catch (error) {
+            console.log(`  ❌ Item ${index + 1} parsing failed:`, item);
+            return null;
+          }
+        }).filter(item => item !== null);
       }
-    }).filter(item => item !== null);
+    }
     
     console.log(`📦 Successfully parsed ${items.length} items`);
     
