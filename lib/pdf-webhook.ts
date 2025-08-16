@@ -30,7 +30,7 @@ export async function generatePDFEstimate(params: GeneratePDFParams): Promise<{ 
     };
     console.log('items is', params.items);
     console.log('Sending data to Make.com webhook:', MAKE_WEBHOOK_URL);
-    
+    console.log('webhook Data: ', webhookData);
     // Send data to Make.com webhook
     const response = await fetch(MAKE_WEBHOOK_URL, {
       method: 'POST',
