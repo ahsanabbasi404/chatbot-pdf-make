@@ -3,21 +3,34 @@ import { generateEstimatePDFBackup } from '../../../lib/estimate-to-pdf-backup';
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    console.log('Data is ', data);
-    // Convert items to array if it's not already
-    if (data.items && !Array.isArray(data.items)) {
-      if (typeof data.items === 'object') {
-        data.items = Object.values(data.items);
-      } else {
-        data.items = [data.items];
+    const formData = await request.formData();
+    
+    // Extract data from FormData
+    const to = formData.get('to') as string;
+    const email = formData.get('email') as string;
+    const itemsData = formData.getAll('items[]') as string[];
+    
+    // Parse items from JSON strings
+    const items = itemsData.map(item => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return null;
       }
-    }
+    }).filter(item => item !== null);
+    
+    // Create data object
+    const data = {
+      to,
+      email,
+      items,
+      estimateNumber: '00001' // Default estimate number
+    };
     
     // Validate required fields
-    if (!data.estimateNumber || !data.items || !Array.isArray(data.items)) {
+    if (!data.to || !data.items || data.items.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: estimateNumber and items (as array) are required' },
+        { error: 'Missing required fields: to and items are required' },
         { status: 400 }
       );
     }
