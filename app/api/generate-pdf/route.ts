@@ -37,6 +37,15 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           console.log(`  ❌ Failed to parse items array:`, error);
         }
+      } else if (itemsData.length === 1 && itemsData[0].includes('},{')) {
+        // Handle comma-separated JSON objects (not a valid JSON array)
+        try {
+          const arrayString = '[' + itemsData[0] + ']';
+          items = JSON.parse(arrayString);
+          console.log(`  ✅ Parsed comma-separated items as array:`, items.length, 'items');
+        } catch (error) {
+          console.log(`  ❌ Failed to parse comma-separated items:`, error);
+        }
       } else {
         // Parse each item individually
         items = itemsData.map((item, index) => {
