@@ -4,7 +4,7 @@ import { generateEstimatePDFBackup } from '../../../lib/estimate-to-pdf-backup';
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    
+    console.log('Data is ', data);
     // Convert items to array if it's not already
     if (data.items && !Array.isArray(data.items)) {
       if (typeof data.items === 'object') {
