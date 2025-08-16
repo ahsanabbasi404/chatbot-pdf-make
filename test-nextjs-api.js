@@ -14,7 +14,8 @@ async function testNextjsAPI() {
       { description: 'Consultation services', units: 10, cost: 540, amount: 5400 },
       { description: 'Installation work', units: 5, cost: 200, amount: 1000 },
       { description: 'Testing and validation', units: 2, cost: 300, amount: 600 }
-    ]
+    ],
+    email: 'abbasiahsan699@gmail.com'
   };
 
   try {

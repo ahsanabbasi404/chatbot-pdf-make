@@ -3,21 +3,33 @@ import { generateEstimatePDFBackup } from '../../../lib/estimate-to-pdf-backup';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📥 PDF Generation Request received');
     const formData = await request.formData();
+    console.log('📋 FormData extracted successfully');
     
     // Extract data from FormData
     const to = formData.get('to') as string;
     const email = formData.get('email') as string;
     const itemsData = formData.getAll('items[]') as string[];
     
+    console.log('📊 FormData contents:');
+    console.log('  - to:', to ? 'Present' : 'Missing');
+    console.log('  - email:', email ? 'Present' : 'Missing');
+    console.log('  - items[] count:', itemsData.length);
+    
     // Parse items from JSON strings
-    const items = itemsData.map(item => {
+    const items = itemsData.map((item, index) => {
       try {
-        return JSON.parse(item);
-      } catch {
+        const parsed = JSON.parse(item);
+        console.log(`  ✅ Item ${index + 1} parsed successfully:`, parsed.description);
+        return parsed;
+      } catch (error) {
+        console.log(`  ❌ Item ${index + 1} parsing failed:`, item);
         return null;
       }
     }).filter(item => item !== null);
+    
+    console.log(`📦 Successfully parsed ${items.length} items`);
     
     // Create data object
     const data = {
@@ -27,16 +39,30 @@ export async function POST(request: NextRequest) {
       estimateNumber: '00001' // Default estimate number
     };
     
+    console.log('🔍 Data validation:');
+    console.log('  - to field:', data.to ? '✅ Valid' : '❌ Missing');
+    console.log('  - items count:', data.items.length);
+    
     // Validate required fields
     if (!data.to || !data.items || data.items.length === 0) {
+      console.log('❌ Validation failed: Missing required fields');
       return NextResponse.json(
         { error: 'Missing required fields: to and items are required' },
         { status: 400 }
       );
     }
+    
+    console.log('✅ Validation passed, generating PDF...');
 
     // Generate PDF using the serverless-compatible backup method
+    const startTime = Date.now();
     const pdfBuffer = await generateEstimatePDFBackup(data);
+    const generationTime = Date.now() - startTime;
+    
+    console.log(`🎉 PDF generated successfully!`);
+    console.log(`  - Generation time: ${generationTime}ms`);
+    console.log(`  - PDF size: ${pdfBuffer.length} bytes (${(pdfBuffer.length / 1024).toFixed(2)} KB)`);
+    console.log(`  - Filename: estimate-${data.estimateNumber}.pdf`);
     
     // Return PDF as response
     return new NextResponse(pdfBuffer, {
@@ -48,7 +74,11 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('💥 Error generating PDF:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return NextResponse.json(
       { error: 'Failed to generate PDF', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
