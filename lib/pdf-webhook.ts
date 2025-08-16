@@ -28,7 +28,7 @@ export async function generatePDFEstimate(params: GeneratePDFParams): Promise<{ 
       timestamp: new Date().toISOString(),
       source: 'openai-assistant'
     };
-    
+    console.log('items is', params.items);
     console.log('Sending data to Make.com webhook:', MAKE_WEBHOOK_URL);
     
     // Send data to Make.com webhook
