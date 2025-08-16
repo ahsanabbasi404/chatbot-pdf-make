@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     console.log('📥 PDF Generation Request received');
     const formData = await request.formData();
     console.log('📋 FormData extracted successfully');
-    
+    console.log('formData is', formData);
     // Extract data from FormData
     const to = formData.get('to') as string;
     const email = formData.get('email') as string;
